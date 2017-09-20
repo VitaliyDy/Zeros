@@ -1,59 +1,60 @@
 module.exports = function zeros(expression) {    
+    const exprArr = expression.split('*');
     let result = 0,
-        exprType = exprArr = [];
+        evenSum =[],  
+        oddSum =[];
 
-    exprArr = expression.split('*');
-  
-    let oneFacrReduce= 0;
-    result = exprArr.map(expDD);
-    let oneFactArr = exprArr.filter((x)=> !x.includes('!!')).map((x) => parseInt(x,10));
-    let twoFactArr = exprArr.filter(expDD).map((x) => parseInt(x,10));
-    //work with !
-    let oneFactArrRes=0;
-    let oneFactArrAddzeros = 0;
-    if (oneFactArr.length){
-        oneFactArrAddzeros = oneFactArr.map((x)=> (x-x%25)/25).reduce((a,b) => a+b);
-        oneFactArrAddzeros=oneFactArrAddzeros + oneFactArr.filter((x)=> x>= 100).length;
-        oneFactArrRes = oneFactArr.map((x) => ((x-(x%5))/5)).filter((x)=> x>0);
-        if(oneFactArrRes.length)
-            oneFacrReduce = oneFactArrRes.reduce((a,b) => a+b);
+    // get two arrays from expression  one with !, second with !!. only numbers with out '!' and '!!'
+    let oneFactArr = exprArr.filter((x)=> !x.includes('!!')).map((x) => parseInt(x,10)),
+        twoFactArr = exprArr.filter(findTwoFact).map((x) => parseInt(x,10));
+
+    //get  two array from twoFactArr. one with only Even numbers, second - with Odd.
+    let twoFactEvenArr = twoFactArr.filter(isEven),
+        twoFactOddArr = twoFactArr.filter(isOdd);  
+
+    //work with ! array if there is such factorials in expression
+    if (oneFactArr.length){       
+        // get zeros for every 5! 
+        // make array with count of 5! in each factorial. then sum it with .reduce()  
+        result += oneFactArr.map((x) => ((x-(x%5))/5)).filter((x)=> x>0).reduce((a,b) => a+b);  
+               
+        // get extra zeros for every 25! 50! 75! and 100!
+        result += oneFactArr.map((x)=> (x-x%25)/25).reduce((a,b) => a+b);        
     }    
-    //work with !!
-    let evenSumReduce = 0;
-    let oddSumReduce = 0;
-    let evenSumAddZero = 0;
-    if (twoFactArr.length) {
-        let twoFactEvenRes = twoFactArr.filter(isEven);
-        let twoFactOddRes = twoFactArr.filter(isOdd);       
 
-        
-        //even
-        let evenSum =[];
-        if (twoFactEvenRes.length) {
-            evenSumAddZero = twoFactEvenRes.filter((x) =>  x >= 50).length;
-            evenSum = twoFactEvenRes.map((num)=>(num-(num%10))/10).filter((x)=> x>0);
+    //work with !! array if there is such factorials in expression    
+    if (twoFactArr.length) {   
+
+        //work with array of EVEN numbers        
+        if (twoFactEvenArr.length) {
+            // get zeros for every 10!!
+            evenSum = twoFactEvenArr.map((num)=>(num-(num%10))/10).filter((x)=> x>0);
             if (evenSum.length)    
-                evenSumReduce = evenSum.reduce((a,b) => a+b);                
+                result += evenSum.reduce((a,b) => a+b); 
+
+            // get extra zeros for 50!!            
+            result += twoFactEvenArr.map((x)=> (x-x%50)/50).reduce((a,b) => a+b);     
         }
 
-        //odd       
-        let oddSum =[];
-        if (twoFactOddRes.length) {
-            oddSum = twoFactOddRes.map(oddParse).filter((x)=> x > 0);
-            if(oddSum.length  && (twoFactEvenRes.filter((x) => x >= 4).length || oneFactArr.filter((x) => x >= 4).length)){
-            
-                oddSumReduce = oddSum.reduce((a,b) => a+b); 
-            }
-            else 
-                oddSumReduce = 0;
+        //work with array of ODD numbers              
+        if (twoFactOddArr.length) {
+            //get zeros for every 5!! 15!! 25!! etc. and get extra zeros for 25!! and 75!! 
+            // ONLY if there are any even factorials >= 4 
+            oddSum = twoFactOddArr.map(oddParse).filter((x)=> x > 0);
+            if(oddSum.length  && (twoFactEvenArr.filter((x) => x >= 4).length || oneFactArr.filter((x) => x >= 4).length)){
+                result += oddSum.reduce((a,b) => a+b); 
+            }         
         }
     }
+    
+    return  result;
 
-    return  evenSumReduce + oddSumReduce + oneFacrReduce + oneFactArrAddzeros+evenSumAddZero;
-
-
-
-    function expDD (strNum) {
+    /**
+     * //returns digits if there is '!!'
+     * @param {*string} strNum 
+     * @return {int}
+     */
+    function findTwoFact (strNum) {
         let num = parseInt(strNum),
             factType = strNum.replace(/\d/g,'');
         if (factType.length >1 )
@@ -62,6 +63,10 @@ module.exports = function zeros(expression) {
             return 0;
     }
 
+    /**
+     * return sum of counts for every ten, extra for 5, 25, 75
+     * @param {*int} num 
+     */
     function oddParse(num) {
         let zerosCount = 0;
         if(num%10 >= 5 )
@@ -70,37 +75,7 @@ module.exports = function zeros(expression) {
             zerosCount ++;          
         if (num >= 75 )
             zerosCount ++;     
-        return zerosCount + (num-(num%10))/10;
-        
-    }
-
-    function oneFactParse(num){
-       
-
-
-    }
-
-    function expParse(strNum){
-        let num = parseInt(strNum),
-            factType = strNum.replace(/\d/g,'');
-
-        if (factType.length === 2) {
-            if(!isEven(num) && num >= 5)
-                return false;
-            else if (!isEven(num) && num < 5)    
-                return 0;
-            else if (isEven(num))
-                return (num-(num%10))/10;
-        } else {
-            return ((num-(num%5))/5);
-        }
-    }
-
-    function getShortestArr (falseArr, secondArr) {
-        if( falseArr.length && secondArr.length)
-            return falseArr.length;
-        else
-            return 0;
+        return zerosCount + (num-(num%10))/10;        
     }
         
     /**
@@ -118,6 +93,5 @@ module.exports = function zeros(expression) {
      */
     function isOdd (num) { //0
         return (num % 2);
-    }
- 
+    } 
 }
